@@ -23,6 +23,10 @@ class FancyprinterarduinoPlugin(
         self._logger.info("Evento: {}".format(event))
         if event == 'PrintStarted':
             self._logger.info('Start sound')
+        if event == 'Upload':
+            self._logger.info('Upload sound')
+    ### PrintFailed, PrintDone, PrintCancelling, PrintCancelled, PrintPaused, PrintResumed, 
+
 
     def on_after_startup(self):
         self._logger.info("Hello World!")
