@@ -73,7 +73,7 @@ void setup()
 
   sendCommand(CMD_SEL_DEV, DEV_TF);
   delay(500);
-  sendCommand(CMD_SET_VOLUME, 5);
+  sendCommand(CMD_SET_VOLUME, 7);
   sendCommand(SET_SNGL_CYCL, 1);
 
   strip.begin();

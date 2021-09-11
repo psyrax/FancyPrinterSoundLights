@@ -11,6 +11,7 @@ from __future__ import absolute_import
 
 import octoprint.plugin
 import serial.tools.list_ports
+import serial 
 
 class FancyprinterarduinoPlugin(
     octoprint.plugin.StartupPlugin,
@@ -20,12 +21,44 @@ class FancyprinterarduinoPlugin(
     octoprint.plugin.EventHandlerPlugin
 ):
 
+    portList = []
+    serialCon = ''
+    serialOpen = False
+    def serialOpen(self, port):
+        try:
+            self.serialCon = serial.Serial(port, 115200)
+            self.serialOpen = True
+        except:
+            print('Serial failed')
+
+    def sendSerialMsg(self, msg):
+        if(self.serialOpen):
+            self.serialCon.write('{}\r\n'.format(msg).encode())
+
     def on_event(self, event, payload):
-        self._logger.info("Evento: {}".format(event))
+        if event == 'Startup':
+            ports = serial.tools.list_ports.comports()
+            for port, desc, hwid in sorted(ports):
+                self.portList.append(port)
+            if self._settings.get(["selectedPort"]) != '':
+                self.serialOpen(self._settings.get(["selectedPort"]))         
+            self.sendSerialMsg('8')
+
         if event == 'PrintStarted':
-            self._logger.info('Start sound')
+            self.sendSerialMsg('3')
+            self.sendSerialMsg('l')
+        
         if event == 'Upload':
-            self._logger.info('Upload sound')
+            self.sendSerialMsg('4')
+        
+        if event == 'PrintDone':
+            self.sendSerialMsg('2')
+            self.sendSerialMsg('o')
+
+        if event in ['PrintFailed', 'PrintCancelled']:
+            self.sendSerialMsg('6')
+            self.sendSerialMsg('o')
+
     ### PrintFailed, PrintDone, PrintCancelling, PrintCancelled, PrintPaused, PrintResumed, 
 
 
@@ -33,9 +66,10 @@ class FancyprinterarduinoPlugin(
     ##~~ SettingsPlugin mixin
 
     def get_settings_defaults(self):
-        ports = serial.tools.list_ports.comports()
+        selectedPort = 'nope'
         return {
-            'ports': [port.name for port in ports]
+            'ports': self.portList,
+            'selectedPort': selectedPort
         }
 
     def get_template_configs(self):
@@ -44,7 +78,10 @@ class FancyprinterarduinoPlugin(
         ]
 
     def get_template_vars(self):
-        return dict(url=self._settings.get(["ports"]))
+        return {
+            'ports' : self._settings.get(["ports"]),
+            'selectedPort' : self._settings.get(["selectedPort"])
+        }
 
     ##~~ AssetPlugin mixin
 
