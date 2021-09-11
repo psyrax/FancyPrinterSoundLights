@@ -9,6 +9,12 @@
 
 
 // Uncomment SoftwareSerial for Arduino Uno or Nano.
+#include <Adafruit_NeoPixel.h>
+#define LED_PIN    A5
+#define LED_COUNT 16
+
+
+Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
 
 
 static int8_t Send_buf[8] = {0}; // Buffer for Send commands.  // BETTER LOCALLY
@@ -34,6 +40,7 @@ boolean autoResume = true;
 #define CMD_PLAY          0X0D
 #define CMD_PAUSE         0X0E
 #define CMD_PLAY_FOLDER_FILE 0X0F
+#define SET_SNGL_CYCL  0x19
 
 #define CMD_STOP_PLAY     0X16
 #define CMD_FOLDER_CYCLE  0X17
@@ -57,7 +64,7 @@ boolean autoResume = true;
 
 
 /*********************************************************************/
-
+uint32_t whiteColor = strip.Color(255, 255, 255);
 void setup()
 {
   Serial.begin(9600);
@@ -66,6 +73,16 @@ void setup()
 
   sendCommand(CMD_SEL_DEV, DEV_TF);
   delay(500);
+  sendCommand(CMD_SET_VOLUME, 5);
+  sendCommand(SET_SNGL_CYCL, 1);
+
+  strip.begin();
+  strip.show(); // Initialize all pixels to 'off'
+  strip.setBrightness(32);
+
+  lightsOn();
+  delay(1000);
+  lightsOff();
 }
 
 
@@ -89,6 +106,16 @@ void loop()
 }
 
 
+void lightsOn(){
+  strip.fill(whiteColor, 0);
+  strip.show();
+}
+
+void lightsOff(){
+  strip.clear();
+  strip.show();
+}
+
 /********************************************************************************/
 /*Function sendMP3Command: seek for a 'c' command and send it to MP3  */
 /*Parameter: c. Code for the MP3 Command, 'h' for help.                                                                                                         */
@@ -96,128 +123,51 @@ void loop()
 
 void sendMP3Command(char c) {
   switch (c) {
-    case '?':
-    case 'h':
-      Serial.println("HELP  ");
-      Serial.println(" p = Play");
-      Serial.println(" P = Pause");
-      Serial.println(" > = Next");
-      Serial.println(" < = Previous");
-      Serial.println(" + = Volume UP");
-      Serial.println(" - = Volume DOWN");
-      Serial.println(" c = Query current file");
-      Serial.println(" q = Query status");
-      Serial.println(" v = Query volume");
-      Serial.println(" x = Query folder count");
-      Serial.println(" t = Query total file count");
-      Serial.println(" 1 = Play folder 1");
-      Serial.println(" 2 = Play folder 2");
-      Serial.println(" 3 = Play folder 3");
-      Serial.println(" 4 = Play folder 4");
-      Serial.println(" 5 = Play folder 5");
-      Serial.println(" S = Sleep");
-      Serial.println(" W = Wake up");
-      Serial.println(" r = Reset");
-      break;
-
-
-    case 'p':
-      Serial.println("Play ");
-      sendCommand(CMD_PLAY, 0);
-      break;
-
-    case 'P':
-      Serial.println("Pause");
-      sendCommand(CMD_PAUSE, 0);
-      break;
-
-
-    case '>':
-      Serial.println("Next");
-      sendCommand(CMD_NEXT_SONG, 0);
-      sendCommand(CMD_PLAYING_N, 0x0000); // ask for the number of file is playing
-      break;
-
-
-    case '<':
-      Serial.println("Previous");
-      sendCommand(CMD_PREV_SONG, 0);
-      sendCommand(CMD_PLAYING_N, 0x0000); // ask for the number of file is playing
-      break;
-
-    case '+':
-      Serial.println("Volume Up");
-      sendCommand(CMD_VOLUME_UP, 0);
-      break;
-
-    case '-':
-      Serial.println("Volume Down");
-      sendCommand(CMD_VOLUME_DOWN, 0);
-      break;
-
-    case 'c':
-      Serial.println("Query current file");
-      sendCommand(CMD_PLAYING_N, 0);
-      break;
-      
-    case 'q':
-      Serial.println("Query status");
-      sendCommand(CMD_QUERY_STATUS, 0);
-      break;
-
-    case 'v':
-      Serial.println("Query volume");
-      sendCommand(CMD_QUERY_VOLUME, 0);
-      break;
-
-    case 'x':
-      Serial.println("Query folder count");
-      sendCommand(CMD_QUERY_FLDR_COUNT, 0);
-      break;
-
-    case 't':
-      Serial.println("Query total file count");
-      sendCommand(CMD_QUERY_TOT_TRACKS, 0);
-      break;
 
     case '1':
-      Serial.println("Play folder 1");
-      sendCommand(CMD_FOLDER_CYCLE, 0x0101);
+      sendCommand(CMD_PLAY_W_INDEX, 0x01);
       break;
 
     case '2':
-      Serial.println("Play folder 2");
-      sendCommand(CMD_FOLDER_CYCLE, 0x0201);
+      sendCommand(CMD_PLAY_W_INDEX, 0x02);
       break;
 
     case '3':
-      Serial.println("Play folder 3");
-      sendCommand(CMD_FOLDER_CYCLE, 0x0301);
+      sendCommand(CMD_PLAY_W_INDEX, 0x03);
       break;
 
     case '4':
-      Serial.println("Play folder 4");
-      sendCommand(CMD_FOLDER_CYCLE, 0x0401);
+      sendCommand(CMD_PLAY_W_INDEX, 0x04);
       break;
 
     case '5':
-      Serial.println("Play folder 5");
-      sendCommand(CMD_FOLDER_CYCLE, 0x0501);
+      sendCommand(CMD_PLAY_W_INDEX, 0x05);
       break;
 
+    case '6':
+      sendCommand(CMD_PLAY_W_INDEX, 0x06);
+      break;
+    
+    case '7':
+      sendCommand(CMD_PLAY_W_INDEX, 0x07);
+      break;
+
+    case '8':
+      sendCommand(CMD_PLAY_W_INDEX, 0x08);
+      break;
     case 'S':
       Serial.println("Sleep");
       sendCommand(CMD_SLEEP_MODE, 0x00);
       break;
-
     case 'W':
       Serial.println("Wake up");
       sendCommand(CMD_WAKE_UP, 0x00);
       break;
-
-    case 'r':
-      Serial.println("Reset");
-      sendCommand(CMD_RESET, 0x00);
+    case 'l':
+      lightsOn();
+      break;
+    case 'o':
+      lightsOff();
       break;
   }
 }
