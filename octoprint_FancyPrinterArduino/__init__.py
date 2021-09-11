@@ -10,6 +10,7 @@ from __future__ import absolute_import
 # Take a look at the documentation on what other plugin mixins are available.
 
 import octoprint.plugin
+import serial.tools.list_ports
 
 class FancyprinterarduinoPlugin(
     octoprint.plugin.StartupPlugin,
@@ -28,14 +29,13 @@ class FancyprinterarduinoPlugin(
     ### PrintFailed, PrintDone, PrintCancelling, PrintCancelled, PrintPaused, PrintResumed, 
 
 
-    def on_after_startup(self):
-        self._logger.info("Hello World!")
-
+ 
     ##~~ SettingsPlugin mixin
 
     def get_settings_defaults(self):
+        ports = serial.tools.list_ports.comports()
         return {
-            'port': 'abc'
+            'ports': [port.name for port in ports]
         }
 
     def get_template_configs(self):
@@ -44,7 +44,7 @@ class FancyprinterarduinoPlugin(
         ]
 
     def get_template_vars(self):
-        return dict(url=self._settings.get(["port"]))
+        return dict(url=self._settings.get(["ports"]))
 
     ##~~ AssetPlugin mixin
 
